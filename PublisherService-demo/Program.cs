@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PublisherService_demo.Data;
 using PublisherService_demo.GraphQL;
+using PublisherService_demo.Repositories;
+using PublisherService_demo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,13 +11,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("ActiveConnectionString")));
 
+// Add Repository & Service
+builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
+builder.Services.AddScoped<IPublisherService, PublisherService>();
+
 // Add GraphQL
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<PublisherQuery>()
-    .AddProjections()
-    .AddFiltering()
-    .AddSorting();
+    .AddQueryType<PublisherQuery>();
 
 var app = builder.Build();
 

@@ -1,76 +1,42 @@
-﻿using PublisherService_demo.Data;
-using PublisherService_demo.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using PublisherService_demo.Models;
+using PublisherService_demo.Services;
 
 namespace PublisherService_demo.GraphQL
 {
     public class PublisherQuery
     {
-        // Get all publishers
-        [UsePaging]
-        [UseProjection]
-        [UseFiltering]
-        [UseSorting]
-        public IQueryable<Publisher> GetPublishers([Service] AppDbContext context)
+        private readonly IPublisherService _publisherService;
+
+        // Service is injected
+        public PublisherQuery(IPublisherService publisherService)
         {
-            return context.Table_Publisher;
+            _publisherService = publisherService;
         }
 
-        // Get single publisher by ID
-        public async Task<Publisher?> GetPublisher(
-            int id,
-            [Service] AppDbContext context)
+        // Called when: ID is provided and valid
+        // Returns: single publisher or error
+        public async Task<SinglePublisherResult> GetPublisherById(int id)
         {
-            return await context.Table_Publisher
-                .Where(p => p.ID_Publisher == id)
-                .FirstOrDefaultAsync();
+            return await _publisherService.GetPublisherByIdAsync(id);
         }
 
-        // Get publishers by id or name with pagination
-        public async Task<PublisherResult> SearchPublisher(
-            int? id,
-            string? name,
-            int pageSize,
-            int pageNumber,
-            [Service] AppDbContext context)
+        // Called when: name is provided
+        // Returns: list of publishers with pagination or error
+        public async Task<PublisherListResult> GetPublishersByName(
+            string name,
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            // Case 1: ID is provided and valid
-            if (id.HasValue && id.Value > 0)
-            {
-                var publisher = await context.Table_Publisher
-                    .Where(p => p.ID_Publisher == id.Value)
-                    .FirstOrDefaultAsync();
+            return await _publisherService.GetPublishersByNameAsync(
+                name, pageNumber, pageSize);
+        }
 
-                if (publisher == null)
-                    return PublisherResult.Failure(
-                        $"Publisher with ID {id} not found.",
-                        "NOT_FOUND");
-
-                return PublisherResult.FoundSingle(publisher);
-            }
-
-            // Case 2: Name is provided
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                var publishers = await context.Table_Publisher
-                    .Where(p => p.Company_Name != null &&
-                           p.Company_Name.Contains(name))
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
-
-                if (!publishers.Any())
-                    return PublisherResult.Failure(
-                        $"No publishers found with name containing '{name}'.",
-                        "NOT_FOUND");
-
-                return PublisherResult.FoundMultiple(publishers);
-            }
-
-            // Case 3: Nothing provided
-            return PublisherResult.Failure(
-                "Please provide either ID_Publisher or Company_Name.",
-                "BAD_REQUEST");
+        // Called when: nothing is provided
+        // Returns: error message
+        public SinglePublisherResult GetPublisherError()
+        {
+            return SinglePublisherResult.Failure(
+                "Please provide either ID_Publisher or Company_Name.");
         }
     }
 }
