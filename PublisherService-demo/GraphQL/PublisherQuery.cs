@@ -5,29 +5,24 @@ namespace PublisherService_demo.GraphQL
 {
     public class PublisherQuery
     {
-        private readonly IPublisherService _publisherService;
-
-        // Service is injected
-        public PublisherQuery(IPublisherService publisherService)
-        {
-            _publisherService = publisherService;
-        }
-
         // Called when: ID is provided and valid
         // Returns: single publisher or error
-        public async Task<SinglePublisherResult> GetPublisherById(int id)
+        public async Task<SinglePublisherResult> GetPublisherById(
+            int id,
+            [Service] IPublisherService publisherService)
         {
-            return await _publisherService.GetPublisherByIdAsync(id);
+            return await publisherService.GetPublisherByIdAsync(id);
         }
 
         // Called when: name is provided
         // Returns: list of publishers with pagination or error
         public async Task<PublisherListResult> GetPublishersByName(
             string name,
+            [Service] IPublisherService publisherService,
             int pageNumber = 1,
             int pageSize = 10)
         {
-            return await _publisherService.GetPublishersByNameAsync(
+            return await publisherService.GetPublishersByNameAsync(
                 name, pageNumber, pageSize);
         }
 
