@@ -1,0 +1,6 @@
+@PublisherService_demo_HostAddress = http://localhost:5034
+
+GET {{PublisherService_demo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
